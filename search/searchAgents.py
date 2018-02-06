@@ -288,19 +288,20 @@ class CornersProblem(search.SearchProblem):
         self.top = top
         self.right = right
         
+        cornerState = [0, 0, 0, 0]
+        if self.startingPosition in self.corners:
+            cornerState[self.corners.index(self.startingPosition)] = 1
+        
+        self.startState = (self.startingPosition, cornerState) 
+        
         
     def getStartState(self):
         "Returns the start state (in your state space, not the full Pacman state space)"
         "*** YOUR CODE HERE ***"   
-        cornerState = [0, 0, 0, 0]
         
         # if the start position is at one of the corners, get its state into 1
-        if self.startingPosition in self.corners:
-            cornerState[self.corners.index(self.startingPosition)] = 0
+        return self.startState 
         
-        startState = (self.startingPosition, cornerState) 
-        return startState
-
     def isGoalState(self, state):
         "Returns whether this search state is a goal state of the problem"
         "*** YOUR CODE HERE ***"
@@ -387,36 +388,38 @@ def cornersHeuristic(state, problem):
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
     "*** YOUR CODE HERE ***"
-    
     if problem.isGoalState(state):
         return 0
     
-    top, right = walls.height-2, walls.width-2
+    top, right = corners[3][1], corners[3][0]
     
     position=state[0]
     cornerState=state[1]
-    
+
     count = 0
-    heuristic=999999
+    allDis=[]
     
     for i in range(0,4):
         if (cornerState[i] == 0):
             count += 1
             dis = util.manhattanDistance(position, corners[i])
-            heuristic = min (heuristic, dis)
+            allDis.append(dis)
+    heuristic = min (allDis)
     
     shortOne = min(top, right)
     longOne = max(top, right)
-    if (count==4):
-        heuristic += 2*shortOne + longOne
-    elif (count==3):
-        heuristic += top +right
-    elif (count == 2):
-        heuristic += shortOne
     
-    return heuristic
+    if (count==4):
+        heuristic += 2*(shortOne-1) + (longOne-1)
+    elif (count==3):
+        heuristic +=  (top-1) + (right-1)
+    elif (count == 2):
+        heuristic += (shortOne-1)
+   
+    return heuristic  
 
 
+    
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
     def __init__(self):
@@ -479,6 +482,8 @@ class AStarFoodSearchAgent(SearchAgent):
         self.searchFunction = lambda prob: search.aStarSearch(prob, foodHeuristic)
         self.searchType = FoodSearchProblem
 
+
+
 def foodHeuristic(state, problem):
     """
     Your heuristic for the FoodSearchProblem goes here.
@@ -506,7 +511,27 @@ def foodHeuristic(state, problem):
     """
     position, foodGrid = state
     "*** YOUR CODE HERE ***"
-    return 0
+    if problem.isGoalState(state):
+        return 0
+    
+    
+    flist = foodGrid.asList()
+    
+    distances=[]
+    half_dis=[]
+    for i in flist:    
+        distances.append(util.manhattanDistance(position, i))
+    farest_one = flist[distances.index(max(distances))]
+    
+
+    for j in flist:
+       
+        half_dis.append(util.manhattanDistance(position,j)+ util.manhattanDistance(j, farest_one))
+    heuristic = max(half_dis)
+    
+    return heuristic
+    
+    
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
@@ -534,8 +559,9 @@ class ClosestDotSearchAgent(SearchAgent):
         problem = AnyFoodSearchProblem(gameState)
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
-
+        return search.breadthFirstSearch(problem)
+        
+        
 class AnyFoodSearchProblem(PositionSearchProblem):
     """
       A search problem for finding a path to any food.
@@ -570,7 +596,11 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         x,y = state
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        foods = self.food.asList()
+        if state in foods:
+            return True
+        else:
+            return False
 
 ##################
 # Mini-contest 1 #

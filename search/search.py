@@ -190,6 +190,7 @@ def aStarSearch(problem, heuristic=nullHeuristic):
         for child in problem.getSuccessors(currLocation):
             if child[0] not in visited:
                 new_path = path+[child[1]]
+                
                 allCost =  problem.getCostOfActions(new_path) + heuristic(child[0], problem)
                 fringe.push((child[0], new_path),allCost)
 
